@@ -1,0 +1,35 @@
+model{
+  for(i in 1:N){
+	    mu[i,1] <-  XCor[i,] %*% betamat[country[i],1:PC]
+                    + alphaCor[country[i]]
+    	mu[i,2] <-  XVol[i,] %*% betamat[country[i],(PC+1):(PC+PV)]
+                    + alphaVol[country[i]]
+     	Y[i,] ~ dmnorm(mu[i,],tau.i)
+     	residuals[i,1] <- Y[i,1]-mu[i,1]
+     	residuals[i,2] <- Y[i,2]-mu[i,2]
+  }
+
+  for(c in 1:C){
+    alphaCor[c] ~ dnorm(mu.acor,tau.acor)
+    alphaVol[c] ~ dnorm(mu.avol,tau.avol)
+    betamat[c,1:(PC+PV)] ~ dmnorm(mu.beta,tau.beta)
+  }
+
+#Priors
+  mu.acor ~ dnorm(0,0.0001)
+  mu.avol ~ dnorm(0,0.0001)
+  tau.acor <- pow(sigma.acor, -2)
+  sigma.acor ~ dunif(0,100)
+  tau.avol <- pow(sigma.avol, -2)
+  sigma.avol ~ dunif(0,100)
+
+  mu.beta ~ dmnorm(beta0,TauMuBeta)
+  tau.beta ~ dwish(Rbeta,PC+PV+1)
+
+  tau.i ~ dwish(Ri,3)
+  sigma2 <- inverse(tau.i)
+  sigma2C <- sqrt(sigma2[1,1])
+  sigma2V <- sqrt(sigma2[2,2])
+  rho <- sigma2[1,2] / (sigma2C * sigma2V)
+
+}
